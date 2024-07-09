@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 import requests
 from time import time
 from urllib.parse import urlparse
@@ -9,9 +10,10 @@ class Blockchain:
         self.current_transactions = []
         self.chain = []
         self.nodes = set()
-
-        # Create the genesis block
-        self.new_block(previous_hash=1, proof=100)
+        self.chain_file = 'chain.json'
+        
+        # Load the chain from the file
+        self.load_chain()
 
     def register_node(self, address):
         """
@@ -79,6 +81,7 @@ class Blockchain:
         # Replace our chain if we discovered a new, valid chain longer than ours
         if new_chain:
             self.chain = new_chain
+            self.save_chain()
             return True
 
         return False
@@ -101,8 +104,8 @@ class Blockchain:
 
         # Reset the current list of transactions
         self.current_transactions = []
-
         self.chain.append(block)
+        self.save_chain()
         return block
     
     def new_transaction(self, sender, recipient, amount):
@@ -157,3 +160,14 @@ class Blockchain:
         guess = f'{last_proof}{proof}'.encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
         return guess_hash[:4] == "0000"
+    
+    def save_chain(self):
+        with open(self.chain_file, 'w') as f:
+            json.dump(self.chain, f)
+
+    def load_chain(self):
+        if os.path.exists(self.chain_file):
+            with open(self.chain_file, 'r') as f:
+                self.chain = json.load(f)
+        else:
+            self.new_block(previous_hash='1', proof=100)  # Create genesis block

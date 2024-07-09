@@ -1,5 +1,6 @@
 import unittest
 import json
+import os
 from server import app, Blockchain
 
 class TestBlockchain(unittest.TestCase):
@@ -8,6 +9,13 @@ class TestBlockchain(unittest.TestCase):
         self.app = app.test_client()
         self.app.testing = True
         self.blockchain = Blockchain()
+        self.blockchain.chain_file = 'test_chain.json'
+        if os.path.exists(self.blockchain.chain_file):
+            os.remove(self.blockchain.chain_file)
+
+    def tearDown(self):
+        if os.path.exists(self.blockchain.chain_file):
+            os.remove(self.blockchain.chain_file)
 
     def test_mine_block(self):
         response = self.app.get('/mine')
